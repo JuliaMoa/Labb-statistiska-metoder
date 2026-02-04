@@ -1,0 +1,16 @@
+*.csv
+
+.vscode/
+.idea/
+
+venv/
+env/
+.venv/
+
+build/
+dist/
+*.egg-info/
+
+__pycache__/
+*.py[cod]
+*$py.class
