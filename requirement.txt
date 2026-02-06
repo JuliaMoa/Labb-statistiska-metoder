@@ -1,0 +1,14 @@
+pillow
+django
+psycopg2-binary
+pandas
+jupyterlab
+numpy
+pandas
+matplotlib
+seaborn
+openpyxl
+ipykernel
+scipy
+ 
+ 
