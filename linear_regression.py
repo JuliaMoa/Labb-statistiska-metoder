@@ -10,7 +10,11 @@ class LinearRegression1:
         self.b = None # initialize coefficients to None, will be calculated in fit method
         self._X = None # store training data for later use in variance and stddev calculations
         self._y = None # store target variable for later use in variance and stddev calculations
-        
+        self.SSE = None 
+        self.Syy = None
+        self.XtX_inv = None
+        # Dessa ses av alla metoder! 
+
     @property
     def n(self):
         return None if self._X is None else int(self._X.shape[0]) #self.d = None # number of features
@@ -31,6 +35,7 @@ class LinearRegression1:
 
         # beta_hat = (X^T * X)^-1 * X^T * y (matrix form) 
         XtX_inv =  np.linalg.inv(X1.T@X1) # (X^T * X)^-1
+        self.XtX_inv = XtX_inv
         
         self.beta = XtX_inv @ X1.T @ y # beta_hat = (X^T * X)^-1 * X^T * y  
                                                 # self.beta is the vector of estimated coefficients
@@ -39,6 +44,14 @@ class LinearRegression1:
         self.residuals = y - y_hat # squared vertical distances 
         # differences between actual and predicted values 
                                         # residuals will be used in variance and stddev calculations
+
+        # SSE and Syy - handy for later
+        SSE = np.sum(self.residuals**2) # sum of squared residuals
+        self.SSE = SSE
+        y_mean = np.mean(self._y)
+        Syy = np.sum((self._y - y_mean)**2)
+        self.Syy = Syy  # total variation 
+
         return self 
     
     def predict(self, X_new):
@@ -48,45 +61,50 @@ class LinearRegression1:
         return X_new @ self.beta # predicted values for new data points 
  
     def variance(self):
-        # step 1: compute SSE (sum of squared errors)
-        SSE = np.sum(self.residuals**2) # sum of squared residuals
+        # step 1: compute SSE (sum of squared errors) - already done in fit 
         # step 2: divide by n-d-1 to get unbiased estimate of variance (degrees of freedom correction) 
-        return SSE / (self.n - self.d - 1)
+        return self.SSE / (self.n - self.d - 1)
     
     # standard deviation method - this is just square root of variance, easy peasy!
     def standard_deviation(self):
-       return np.sqrt(self.variance())
+        return np.sqrt(self.variance())
         
     # RMSE method - root mean squared error
     def root_mean_squared_error(self):
-        SSE = np.sum(self.residuals**2)
-        return np.sqrt(SSE / self.n)
+        return np.sqrt(self.SSE / self.n)
+    
+    # ---------------- VG ------------------------------------------------------------------------------
 
     def significance_regression(self):
         #predicted values
         y_hat = self._X @ self.beta
-        # mean of y
-        np.mean(self._y) 
-        # sums of squares 
-        SSE = np.sum((self._y - y_hat)**2) # residuals
-        SSR = np.sum((y_hat - np.mean(self._y))**2) # regression
+        SSR = self.Syy - self.SSE # regression
         # degrees of freedom
         df_reg = self.d # number of predictors 
         df_err = self.n - self.d - 1
         # F-statistic
-        F = (SSR / df_reg) / (SSE / df_err)
+        F = (SSR / df_reg) / (self.SSE / df_err)
         # p-value
-        p_value = 1 - stats.f.cdf(F, df_reg, df_err)
-
+        p_value = stats.f.sf(F, df_reg, df_err) # survival function for F-distribution
         return F, p_value 
 
-    # method for relevence of the regression - R^2
-    
+    # method for relevence of the regression 
+
+    def r_squares(self):
+        y_mean = np.mean(self._y)
+        return 1 - self.SSE / self.Syy # R^2 = 1 - SSE/Syy
 
     # significance test on individual variables - t-test on coefficients
+    def t_test_coefficiants(self): 
+        sigma2_hat = self.variance() # estimated variance of residuals
+        t_stats = self.beta.flatten() / np.sqrt(sigma2_hat * np.diag(self.XtX_inv)) # t-statistics for each coefficient
+        p_values = 2 * stats.t.sf(np.abs(t_stats), df= self.n - self.d - 1) # two-tailed p-values for t-test
+        return t_stats, p_values # t-stats: t-values for each coefficient, p-values: significance of each coefficient
 
     # method for calculating Pearson number between all pairs of parameters
 
+    
+
     # confidence intervals on individual parameters
 
-    # being able to set a confidence interval for the statistics??1
+    # being able to set a confidence interval for the statistics??
