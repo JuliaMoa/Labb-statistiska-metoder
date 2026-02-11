@@ -22,7 +22,7 @@ class LinearRegression1:
     
     def fit(self, X, y): 
         X = np.asarray(X, dtype=float)
-        y = np.asarray(y, dtype=float).reshape(-1, 1)
+        y = np.asarray(y, dtype=float).reshape(-1, 1) # ensure y is a column vector
      
         X1 = np.column_stack([np.ones(X.shape[0]), X]) 
 
@@ -61,7 +61,6 @@ class LinearRegression1:
         return np.sqrt(self.SSE / self.n)
     
     def significance_regression(self):
-        y_hat = self._X @ self.beta
         SSR = self.Syy - self.SSE # regression
         # degrees of freedom
         df_reg = self.d 
@@ -70,17 +69,15 @@ class LinearRegression1:
         F = (SSR / df_reg) / (self.SSE / df_err)
         # p-value
         p_value = stats.f.sf(F, df_reg, df_err) # survival function for F-distribution
-        significant = p_value < self.alpha
+        #significant = p_value < self.alpha
         return F, p_value
 
     def r_squares(self):  # method for relevence of the regression 
-        y_mean = np.mean(self._y)
         return 1 - self.SSE / self.Syy # R^2 = 1 - SSE/Syy
 
     def t_test_coefficiants(self): 
         t_stats = self.beta.flatten() / np.sqrt(self.sigma2_hat * np.diag(self.XtX_inv)) # t-statistics for each coefficient
-        p_values = 2 * stats.t.sf(np.abs(t_stats), df= self.n - self.d - 1) # two-tailed p-values for t-test
-        significant = p_values < self.alpha 
+        p_values = 2 * stats.t.sf(np.abs(t_stats), df= self.n - self.d - 1) # two-tailed p-values for t-test 
         return t_stats, p_values
     
     def Pearson_correlation(self):
